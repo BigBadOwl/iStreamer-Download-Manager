@@ -1,0 +1,9 @@
+Firstly, let me confess that I am a hack. Some of the coding in this project should not be shown to children or pets for fear of scaring the bejesus out of them. Hard core coders - I apologise in advance, Objective-C is not my first language.
+
+I welcome correction to the is code.
+
+The project uses Rtmpdump and ffmpeg to download H264 Flash streams and then places it in an MP4 container without re-encoding it. It also has the option to download the lower res iPhone MP$ version. It has the added benefit of being able to play the download over AirPlay to an AppleTV 2. The download manager component is based on the download manager code written by Enea Gjoka.
+
+Currently it uses the BBC iPlayer as it's test base, but there is no reason why it can't be used for other services by expanding the codebase using the provided example in iplayerFetch.m
+
+An important TODO is getting threading working within iplayerFetch.m in order for it to release the screen during a high res download.
