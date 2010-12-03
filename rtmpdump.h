@@ -1,0 +1,1 @@
+int getStream(int argc, char **argv);

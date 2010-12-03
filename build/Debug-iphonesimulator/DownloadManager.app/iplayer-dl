@@ -1,0 +1,152 @@
+#!/usr/bin/env ruby
+
+# Download iPlayer programmes by spoofing an iPhone
+# Paul Battley - http://po-ru.com/
+#
+# Get the latest version:
+# http://github.com/threedaymonk/iplayer-dl
+
+require 'iplayer'
+require 'optparse'
+require 'fileutils'
+require 'iplayer/version'
+require 'iplayer/preferences'
+
+include IPlayer
+include IPlayer::Errors
+
+preferences = IPlayer::Preferences.new
+filenames   = []
+pid_list    = nil
+dry_run     = false
+
+opts = ARGV.options{ |o|
+  o.banner << ' IDENTIFIER [IDENTIFIER [...]]'
+  o.define_head 'Download DRM-free videos from the BBC iPlayer, courtesy of their iPhone interface.'
+  o.separator 'IDENTIFIER is the iPlayer viewing page URL or the PID of the programme.'
+  o.separator ''
+  o.on(
+    '-t', '--type-preference=VERSION', String,
+    'Video types in order of preference.',
+    "Default is '#{preferences.type_preference.join(',')}'."
+  ) { |s| preferences.type_preference = s.split(/,\s*/) }
+  o.on(
+    '-d', '--download-path=PATH', String,
+    'Location into which downloaded files will be saved.',
+    'Default is current working directory.'
+  ) { |d| preferences.download_path = d }
+  o.on(
+    '-s', '--title-subdir',
+    'Place downloaded files in a sub-directory named after the title of the programme.'
+  ) { preferences.subdirs = true }
+  o.on(
+    '-u', '--subtitles',
+    'Also download subtitles.'
+  ) { preferences.subtitles = true }
+  o.on(
+    '-f', '--filename=FILENAME', String,
+    'Manually specify a name for the downloaded file.',
+    'The default is constructed from the programme metadata.',
+    'You can specify this multiple times for each download in order.'
+  ) { |f| filenames << f }
+  o.on(
+    '-p', '--http-proxy=HOST:PORT', String,
+    'Specify an HTTP proxy.',
+    'Default is taken from the http_proxy environment variable.'
+  ) { |p| preferences.http_proxy = p }
+  o.on(
+    '-l', '--pid-list=FILENAME', String,
+    'List PIDs to be downloaded in a file, one per line.'
+  ) { |l| pid_list = l }
+  o.on(
+    '-n', '--dry-run', String,
+    'Parse the iPlayer page and output the filename but don\'t actually download (useful for scripting).'
+  ) { |n| dry_run = true }
+  o.on(
+    '-v', '--version',
+    'Show the software version.'
+  ) { puts IPlayer::VERSION; exit }
+  o.on_tail(
+    '-h', '--help', 
+    'Show this help message.'
+  ) { puts o; exit }
+}
+
+begin
+  opts.parse!
+  pids = ARGV
+  if pid_list
+    pids += File.read(pid_list).strip.split(/\s*\r?\n\s*/)
+  end
+  raise 'no programme identifier specified' if pids.empty?
+rescue => exception
+  $stderr.puts 'Error: '+exception.to_s, ''
+  puts opts
+  exit 1
+end
+
+if http_proxy = preferences.http_proxy
+  http_proxy = 'http://' + http_proxy unless http_proxy =~ %r{^http://}
+  u = URI.parse(http_proxy)
+  $stderr.puts "Using proxy #{u.host}:#{u.port}"
+  http = Net::HTTP::Proxy(u.host, u.port, u.user, u.password)
+else
+  http = Net::HTTP
+end
+
+pids.each_with_index do |pid, i|
+  browser = Browser.new(http)
+
+  begin
+    pid = Downloader.extract_pid(pid)
+    downloader = Downloader.new(browser, pid)
+
+    available_versions = downloader.available_versions
+    raise MP4Unavailable if available_versions.empty?
+    version = available_versions.sort_by{ |v| 
+      preferences.type_preference.index(v.name) || 100 
+    }.first
+
+    filename = filenames[i]
+    if filename.nil? || preferences.subdirs
+      metadata = downloader.metadata
+      filename ||= "#{ metadata.full_title }.#{ metadata.filetype }".gsub(/[^a-z0-9 \-\.]+/i, '')
+    end
+    if preferences.subdirs
+      subdir = metadata.title.gsub(/[^a-z0-9 \-\.]+/i, '')
+      path = File.expand_path( File.join( preferences.download_path, subdir ))
+      FileUtils.makedirs(path)
+      path = File.join( path, filename )
+    else
+      path = File.expand_path( File.join( preferences.download_path, filename ))
+    end
+
+    if dry_run
+      $stdout.puts filename
+    else
+      old_percentage = nil
+      first_chunk = true
+
+      $stderr.puts "#{ filename } (version: #{ version.name })"
+      download_options = {:subtitles => preferences.subtitles}
+      downloader.download(version.pid, path, download_options) do |position, max|
+        if first_chunk
+          $stderr.puts "Resuming download at #{position} bytes." if position > 0
+          first_chunk = false
+        end
+
+        percentage = "%.1f" % [((1000 * position) / max) / 10.0]
+        if percentage != old_percentage
+          old_percentage = percentage
+          $stderr.print "\r#{ percentage }%"
+          $stderr.flush
+        end
+      end
+      $stderr.puts
+    end
+
+  rescue RecognizedError => error
+    $stderr.puts(error.to_str)
+    next
+  end
+end

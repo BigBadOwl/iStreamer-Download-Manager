@@ -1,0 +1,63 @@
+TDownloadManager
+v7
+r1
+
+N/Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app
+t2
+s0
+
+N/Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app/Contents/Info.plist
+t2
+s0
+
+N/Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app/Contents/PkgInfo
+t2
+s0
+
+N/Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app/Contents/Resources/MainWindow_iPad.nib
+t2
+s0
+
+N/Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app/Contents/Resources/MainWindow_iPhone.nib
+t2
+s0
+
+N/Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app/Contents/Resources/webBrowser.nib
+t2
+s0
+
+N/Users/colinb/Downloads/DownloadManager/iPad/MainWindow_iPad.xib
+c000000004C95740600000000000038A5
+t1284862982
+s14501
+
+N/Users/colinb/Downloads/DownloadManager/iPhone/MainWindow_iPhone.xib
+c000000004C9574060000000000003A93
+t1284862982
+s14995
+
+N/Users/colinb/Downloads/DownloadManager/iPhone/webBrowser.xib
+c000000004C95784600000000000043FA
+t1284864070
+s17402
+
+NDownloadManager-Info.plist
+c000000004C9574060000000000000569
+t1284862982
+s1385
+
+CCompileXIB /Users/colinb/Downloads/DownloadManager/iPad/MainWindow_iPad.xib
+r0
+
+CCompileXIB /Users/colinb/Downloads/DownloadManager/iPhone/MainWindow_iPhone.xib
+r0
+
+CCompileXIB /Users/colinb/Downloads/DownloadManager/iPhone/webBrowser.xib
+r0
+
+CProcessInfoPlistFile /Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app/Contents/Info.plist DownloadManager-Info.plist
+r0
+
+CTouch /Users/colinb/Downloads/DownloadManager/build/Debug/DownloadManager.app
+r0
+
